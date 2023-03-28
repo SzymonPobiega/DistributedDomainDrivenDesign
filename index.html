@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Distributed domain-driven design, a no-nonsense implementation guide</title>
+		<meta name="description" content="Distributed domain-driven design, a no-nonsense implementation guide">
+		<meta name="author" content="Szymon Pobiega">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/night.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="plugin/highlight/zenburn.css">
+
+		<style media="screen" type="text/css">
+			.reveal section img { background:none; border:none; box-shadow:none; }
+
+			.reveal table {
+			  margin: auto;
+			  border-collapse: collapse;
+			  border-spacing: 0;
+			}
+
+			.reveal table th {
+			  font-weight: bold;
+			}
+
+			.reveal table th,
+			.reveal table td {
+			  text-align: left;
+			  padding: 0.2em 0.5em 0.2em 0.5em;
+			  border-bottom: 1px solid;
+			}
+
+			.highlight-inline {
+            	background:yellow;
+            	color:black;
+			}
+			
+			.highlight-inline span {
+				background:inherit;
+				color:inherit;
+			}
+
+			.reveal pre code {
+				font-size: 1.4em;
+				line-height: 1.2;
+			}
+
+			img.zoom-island {
+				transform: translate(0, -15%);
+			}
+
+			img.zoom-centre {
+				transform: scale(2.1) translate(0, 0);
+			}
+			
+			img.zoom-left-centre {
+				transform: scale(2.2) translate(25%, 0);
+			}
+
+			img.zoom-left-top {
+				transform: scale(2.2) translate(25%, 30%);
+			}
+
+			img.zoom-left-bottom {
+				transform: scale(2.2) translate(25%, -25%);
+			}
+
+			img.zoom-right-centre {
+				transform: scale(1.8) translate(-25%, 0);
+			}
+
+			img.zoom-right-top {
+				transform: scale(2.4) translate(-25%, 20%);
+			}
+
+			img.zoom-right-centre-top {
+				transform: scale(2.4) translate(-25%, 0);
+			}
+
+			img.zoom-right-bottom {
+				transform: scale(2.4) translate(-25%, -25%);
+			}
+			#footer-left {
+				position: absolute;
+				bottom: 5%;
+				left: 2%;
+			}
+
+			pre {
+				tab-size: 3;
+			}
+
+			.particular-logo {
+				position: fixed;
+				height: 80px;
+				z-index: 30;
+				left: 20px;
+				bottom: 50px;
+			}
+
+			.credits {
+				position: fixed;
+				height: 80px;
+				z-index: 30;
+				right: 20px;
+				bottom: 20px;
+			}
+
+			span.hljs-comment {
+				display: none;
+			}
+			span.line-annotation {
+				display: none;
+			}
+			tr.highlight-line span.hljs-comment {
+				display: inline;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="reveal">
+			<aside class="particular-logo" id="particular-logo">
+				<img src="images/Particular.svg" height="100em"/>
+			</aside>
+			<aside class="credits">
+				<div>exactly-once.github.io</div>
+			</aside>
+			<div class="slides">
+				<section>
+					<h2>Distributed DDD</h2>
+					<h3>a no-nonsense implementation guide</h3>
+					<p><a href="https://exactly-once.github.io/">exactly-once.github.io</a></p>
+					<p><a href="https://www.linkedin.com/in/szymonpobiega/">linkedin.com/in/SzymonPobiega</a></p>
+					<p><a href="https://twitter.com/SzymonPobiega">twitter.com/SzymonPobiega</a></p>
+					<aside class="notes">
+						Tranditional approaches
+						<ul>
+							<li>Event-source everything</li>
+							<li>HTTP APIs</li>
+							<li>Messaging with deduplication</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>Domain-Driven Design</h2>
+					<h2>Event Sourcing</h2>
+					<img src="images/Particular.svg" height="100em"/>
+				</section>
+				<!-- <section>
+					<img src="images/architect.jpg" class="stretch"/>
+				</section>
+				<section>
+					<figure>
+						<img src="images/architects.png"/>
+						<figcaption>
+							<small>Pony images by <a href="https://www.deviantart.com/andoanimalia">AndroAnimalia</a></small>
+						</figcaption>
+					</figure>
+				</section> -->
+				<!-- <section>
+					<img src="images/potions.png" class="stretch"/>
+				</section> -->
+				<section data-transition="slide-in none-out">
+					<img src="images/30k-view-1.png" class="stretch"/>
+					<aside class="notes">
+						Let's start with a single potato
+					</aside>
+				</section>
+				<section data-transition="none-in none-out">
+					<div class="r-stack stretch">
+						<img class="" src="images/30k-view-2.png" />
+						<img class="fragment" src="images/30k-view-3.png" />
+						<img class="fragment" src="images/30k-view-4.png" />
+						<img class="fragment" src="images/30k-view-8-1.png" />
+						<img class="fragment" src="images/30k-view-8-2.png" />
+						<img class="fragment" src="images/30k-view-8-3.png" />
+						<img class="fragment" src="images/30k-view-8-4.png" />
+						<img class="fragment" src="images/30k-view-8-5.png" />
+						<img class="fragment" src="images/30k-view-8-6.png" />
+					</div>
+					<aside class="notes">
+						And grow more potatos. At this point you might be wondering what potatos and software have in common and if you joined the right webinar
+						<hr>
+						Let's put the potatos on a design surface now
+						<hr>
+						And now it is obvious, these are not potatoes but bounded contexts!
+						<hr>
+						Let's write some code. Or better, let's do some modeling.
+					</aside>
+				</section>
+				<section>
+					<img src="images/drake-1.jpg" />
+					<aside class="notes">
+						In this talk we are going to use the advice of two experts. One is Drake
+						All coding is modeling but we want to focus on getting the model as clean as possible, having only the parts relevant to the business expressed as clean as possible
+					</aside>
+				</section>
+				<section >
+					<img src="images/ddd-book.jpg" class="stretch"/>
+					<aside class="notes">
+						Let's see what Eric has to say
+					</aside>
+				</section>
+				<section>
+					<h2>Tackling complexity at the heart of software</h2>
+					<aside class="notes">
+						
+					</aside>
+				</section>
+				<section>
+					<img src="images/drake-2.jpg" />
+					<aside class="notes">
+						What would Drake tell us about this idea?
+						<hr>
+						Assumption: infrastructure can be set aside and someone else is going to deal with it
+					</aside>
+				</section>
+				<section data-transition="none-out">
+					<h4>The network is reliable</h4>
+					<h4>Latency is zero</h4>
+					<h4>Bandwidth is infinite</h4>
+					<h4>The network is secure</h4>
+					<h4>Topology doesn't change</h4>
+					<h4>There is one administrator</h4>
+					<h4>Transport cost is zero</h4>
+					<h4>The network is homogeneous</h4>
+				</section>
+				<section data-transition="none-in">
+					<h4>The network is <span style="color: red;">NOT</span> reliable</h4>
+					<h4>Latency is <span style="color: red;">NOT</span> zero</h4>
+					<h4>Bandwidth is <span style="color: red;">NOT</span> infinite</h4>
+					<h4>The network is <span style="color: red;">NOT</span> secure</h4>
+					<h4>Topology <span style="color: red;">DEOES</span> change</h4>
+					<h4>There is <span style="color: red;">NOT</span> one administrator</h4>
+					<h4>Transport cost is <span style="color: red;">NOT</span> zero</h4>
+					<h4>The network is <span style="color: red;">NOT</span> homogeneous</h4>
+				</section>
+				<section>
+					<h2>The network is <span style="color: red;">NOT</span> reliable</h2>
+				</section>
+				<section>
+					<h2>The system is as good as its weakest component</h2>
+				</section>
+				<!-- <section>
+					<h2 class="fragment">Just use ... architecture</h2>
+					<h2 class="fragment">Include comms in the core domain</h2>
+					<h2 class="fragment">Treat comms as a separate domain</h2>
+				</section> -->
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/domains-0a.png" />
+						<img class="fragment" src="images/domains-0b.png" />
+						<img class="fragment" src="images/domains-0.png" />
+						<img class="fragment" src="images/domains-1.png" />
+						<img class="fragment" src="images/domains-2.png" />
+						<img class="fragment" src="images/domains-3.png" />
+						<img class="fragment" src="images/domains-4.png" />
+						<img class="fragment" src="images/domains-5.png" />
+					</div>
+					<aside class="notes">
+						Anti-corruption layer helps with coupling
+					</aside>
+				</section>
+				<section>
+					<h2>Tackling complexity at the <span style="text-decoration: line-through">heart</span> borders of software</h2>
+					<aside class="notes">
+						This talk is going to be about the borders, not he heart. To learn about the heart, go grab the blue book.
+						<hr>
+						Let's now get back to our system blueprint
+					</aside>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/message-based-processes-1.png" />
+						<img class="fragment" src="images/message-based-processes-2.png" />
+						<img class="fragment" src="images/message-based-processes-2-1.png" />
+					</div>
+					<aside class="notes">
+						The message comes in. The code that does the processing needs to update the database and publish a follow-up message (event).
+						<hr>
+						Let's take a look at the DB aspect first
+						<hr>
+						If we zoom in, there are in fact two operations happening here. Save and consume
+					</aside>
+				</section>
+				<section>
+					<img src="images/no-transactions.jpg" />
+					<aside class="notes">
+						There is no transaction between consuming the message and updating the database. 
+						That means PARTIAL FAILURES are possible. We update the DB and fail to tell the queue to delete the message. The message comes back again.
+						What can we do?
+						<hr>
+						Should we first consume and then save or the other way round?
+					</aside>
+				</section>
+				<section>
+					<img src="images/drake-5.jpg" />
+					<aside class="notes">
+						Consuming the message first removes most of the benefits of the message queue
+						<hr>
+						The result is we might fail to consume. The message is going to be re-delivered so we need to detect duplicates!
+						<hr>
+						In order to deduplicate we need to store the processing information somewhere. But where?
+					</aside>
+				</section>
+				<section>
+					<h2>Deduplicate</h2>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/message-based-processes-2-2.png" />
+						<img class="fragment" src="images/message-based-processes-2-3.png" />
+					</div>
+				</section>
+				<section>
+					<h3>Aggregates are transaction boundaries</h3>
+				</section>
+				<section>
+					<h3>
+					<pre class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|5|1|2|5">
+var order = repo.Find(msg.OrderId);
+if (!order.HasProcessed(msg.Id)) {
+	order.ConfirmPayment(msg.Id);
+	repo.Save(order);
+}
+					</code></pre>
+					</h3>
+					<aside class="notes">
+						We need to somehow record the information that we have already updated the DB.
+						<hr>
+						We can't just record that anywhere. We NEED to do it atomically with the update itself. Otherwise we risk partial failures:
+						<ul>
+							<li>We record processing but fail to update</li>
+							<li>We update but fail to record the processing</li>c:\Projects\DistributedDomainDrivenDesign\index.htmlC:\Users\szymo\OneDrive\Projects\IShallSayThisOnlyOnce\docs\index.html
+						</ul>
+						<hr>
+						Remember Drake -- we want the model to be as clean as possible
+					</aside>
+				</section>
+				<section>
+					<h3>Repositories are aware of messaging</h3>
+				</section>
+				<section data-auto-animate>
+					<h3>
+					<pre data-id="code-animation" class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="2,3">
+var order = repo.Find(msg.OrderId);
+if (!order.HasProcessed(msg.Id)) {
+	order.ConfirmPayment(msg.Id);
+	repo.Save(order);
+}
+					</code></pre>
+					</h3>
+				</section>
+				<section data-auto-animate>
+					<h3>
+					<pre data-id="code-animation" class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="2,4">
+var order = repo.Find(msg.OrderId);
+if (!repo.HasProcessed(msg.Id)) {
+	order.ConfirmPayment();
+	repo.Save(order, msg.Id);
+}
+					</code></pre>
+					</h3>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/message-based-processes-3.png" />
+						<img class="fragment" src="images/message-based-processes-4.png" />
+					</div>
+					<aside class="notes">
+						Now let's focus on the other side of the picture. Publishing the follow-up event.
+					</aside>
+				</section>
+				<section>
+					<img src="images/no-transactions.jpg" />
+					<aside class="notes">
+						We have the same problem here, again. No atomic save-and-publish!
+						<hr>
+						Let's ask our expert for advice
+					</aside>
+				</section>
+				<section>
+					<img src="images/drake-4.jpg"/>
+					<aside class="notes">
+						With publish and update approach we could leak GHOST MESSAGES.
+						<hr>
+						Let's see that in action using pseudocode
+					</aside>
+				</section>
+				<section>
+					<h3>
+					<pre class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|5-6|1|2|7">
+var order = repo.Find(msg.OrderId);
+if (!repo.HasProcessed(msg.Id)) {
+	order.ConfirmPayment();
+	repo.Save(order, msg.Id);
+	//...🧨💥🔥💀😭
+	context.Publish(new PaymentConfirmed()); 
+}
+					</code></pre>
+					</h3>
+					<aside class="notes">
+						All good? Not really. See what can happen when we fail to publish.
+					</aside>
+				</section>
+				<section>
+					<img src="images/garbage.png" class="stretch"/>
+					<aside class="notes">
+						We lost a message. NOT GOOD. Can we do better?
+					</aside>
+				</section>
+				<section data-auto-animate>
+					<h3>
+					<pre data-id="code-animation" class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="6">
+var order = repo.Find(msg.OrderId);
+if (!repo.HasProcessed(msg.Id)) {
+	order.ConfirmPayment();
+	repo.Save(order, msg.Id);
+	//...🧨💥🔥💀😭
+	context.Publish(new PaymentConfirmed()); 
+}
+					</code></pre>
+					</h3>
+					<aside class="notes">
+						All good? Not really. See what can happen when we fail to publish.
+					</aside>
+				</section>
+				<section data-auto-animate data-transition="none-out">
+					<h3>
+					<pre data-id="code-animation" class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="7">
+if (!repo.HasProcessed(msg.Id)) {
+	var order = repo.Find(msg.OrderId);
+	order.ConfirmPayment();
+	repo.Save(order, msg.Id); 
+}
+//...🧨💥🔥💀😭
+context.Publish(new PaymentConfirmed()); 
+					</code></pre>
+					</h3>
+				</section>
+				<section data-transition="none-in">
+					<h3>
+					<pre class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|5|6-7|1|5|7">
+if (!repo.HasProcessed(msg.Id)) {
+	var order = repo.Find(msg.OrderId);
+	order.ConfirmPayment();
+	repo.Save(order, msg.Id); 
+}
+//...🧨💥🔥💀😭
+context.Publish(new PaymentConfirmed()); 
+					</code></pre>
+					</h3>
+				</section>
+				<section>
+					<img src="images/sagas-1.png" class="stretch"/>
+					<aside class="notes">
+						Example: contact one payment provider and if there is no response in 30 seconds, contact the backup provider
+						<hr>
+						In the previous example we had event-based state transfer
+						Here we keep the state in one place and dispatch messages to trigger actions and gather the results
+					</aside>
+				</section>
+				<!-- <section>
+					<h2>The state is in one places</h2>
+					<h3 class="fragment">Messages dispatched to trigger actions and gather results</h3>
+				</section> -->
+				<section>
+					<h3>Messages based on mutable state</h3>
+				</section>
+				<section>
+					<h1>\(f(f(x)) = f(x)\)</h1>
+					<aside class="notes">
+						That's how idempotence looks like. In mathemetics.
+						<hr>
+						In software we usually assume f(x) is the DB change we want to get done while in fact it is all the side effects of the message processing, including the DB change and the outgoing messages.
+					</aside>
+				</section>
+				<section data-transition="slide-in none-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|6|7">
+var c = repo.Find(msg.CustomerId); //msg.Id == ABC
+if (!repo.HasProcessed(msg.Id))  {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) {
+	context.Send(new SendGift());
+}
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1">
+var c = repo.Find(msg.CustomerId); //msg.Id == DEF
+if (!repo.HasProcessed(msg.Id)) {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) {
+	context.Send(new SendGift());
+}
+					</code></pre>
+					</h4>
+					<aside class="notes">
+						Let's observe some concurrent message processing to understand how important it is to understand the f(x) scope
+					</aside>
+				</section>
+				<section data-transition="none-in none-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="7">
+var c = repo.Find(msg.CustomerId); //msg.Id == ABC
+if (!repo.HasProcessed(msg.Id))  {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) {
+	context.Send(new SendGift()); //...🧨💥🔥💀😭
+}
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|6|8">
+var c = repo.Find(msg.CustomerId); //msg.Id == DEF
+if (!repo.HasProcessed(msg.Id)) {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) { //c.Orders == 2
+	context.Send(new SendGift());
+}
+					</code></pre>
+					</h4>
+				</section>
+				<section data-transition="none-in slide-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|6|8">
+var c = repo.Find(msg.CustomerId); //msg.Id == ABC
+if (!repo.HasProcessed(msg.Id))  {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) { //c.Orders == 2
+	context.Send(new SendGift());
+}
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="8">
+var c = repo.Find(msg.CustomerId); //msg.Id == DEF
+if (!repo.HasProcessed(msg.Id)) {
+	c.PlaceOrder(msg.OrderData);
+	repo.Save(c, msg.Id);
+}
+if (c.Orders = 1) {
+	context.Send(new SendGift());
+}
+					</code></pre>
+					</h4>
+				</section>
+				<section>
+					<img src="images/garbage.png" class="stretch"/>
+					<aside class="notes">
+						Message lost, again! NOT GOOD.
+					</aside>
+				</section>
+				<section>
+					<h2>Outbox</h2>
+					<aside class="notes">
+						In the context of DDD, Outbox is part of the repository
+						<hr>
+						It would be a waste of resources to re-implement the outbox pattern yourself
+					</aside>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/outbox-1.png" />
+						<img class="fragment" src="images/web-ui-3.png" />
+					</div>
+				</section>
+				<section>
+					<img src="images/web-ui-1.png" />
+				</section>
+				<section>
+					<h2>A customer places an order</h2>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/web-ui-2.png" />
+						<img class="fragment" src="images/web-ui-3.png" />
+						<img class="fragment" src="images/web-ui-4.png" />
+					</div>
+					<aside class="notes">
+						Now we see customer placing the order. It then wants to see the order data visible in the web browser.
+						<hr>
+						We could use the outbox but then we would require the customer to drive the process to completion. NOT GOOD.
+						<hr>
+						We could solve it by adding an intermediate messaging step.
+						<hr>
+						A better solution requires atomic save and send capability.
+					</aside>
+				</section>
+				<section>
+					<h2>Atomic save & send</h2>
+					<hr>
+					<h2>Transactional session</h2>
+				</section>
+				
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/web-ui-7-3.png" />
+						<img class="fragment" src="images/web-ui-6.png" />
+						<img class="fragment" src="images/web-ui-6-1.png" />
+						<img class="fragment" src="images/web-ui-5-1.png" />
+						<img class="fragment" src="images/web-ui-8-1.png" />
+					</div>
+					<aside class="notes">
+						The pattern is based on an intentional race condition between committing the transaction and rolling it back via a delayed message.
+						<hr>
+						First, the web controller action sends a delayed message to drive the process.
+						<hr>
+						Then the action attempts to update the database and store (atomically) the outgoing messages
+						<hr>
+						Next the delayed message is picked up and dispatches the stored messages to their destinations
+						<hr>
+						If the controller action failed to commit, the delayed message is eventually discarded
+						<hr>
+						If the controller action takes too long to commit, the delayed message inserts a tombstone that causes the controller action transaction to fail
+					</aside>
+				</section>
+				<section>
+					<img src="images/drake-3.jpg" />
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/web-ui-8-1.png" />
+						<img class="fragment" src="images/web-ui-5-1.png" />
+						<img class="fragment" src="images/web-ui-7-3.png" />
+						<img class="fragment" src="images/web-ui-5-3.png" />
+						<img class="fragment" src="images/web-ui-6.png" />
+					</div>
+					<aside class="notes">
+						The pattern is based on an intentional race condition between committing the transaction and rolling it back via a delayed message.
+						<hr>
+						First, the web controller action sends a delayed message to drive the process.
+						<hr>
+						Then the action attempts to update the database and store (atomically) the outgoing messages
+						<hr>
+						Next the delayed message is picked up and dispatches the stored messages to their destinations
+						<hr>
+						If the controller action failed to commit, the delayed message is eventually discarded
+						<hr>
+						If the controller action takes too long to commit, the delayed message inserts a tombstone that causes the controller action transaction to fail
+					</aside>
+				</section>
+				<section>
+					<h2>The network is <span style="color: red;">NOT</span> reliable</h2>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/web-ui-7-1.png" />
+						<img class="fragment" src="images/web-ui-7-2.png" />
+						<img class="fragment" src="images/web-ui-7-3.png" />
+					</div>
+					<aside class="notes">
+						The pattern is based on an intentional race condition between committing the transaction and rolling it back via a delayed message.
+						<hr>
+						First, the web controller action sends a delayed message to drive the process.
+						<hr>
+						Then the action attempts to update the database and store (atomically) the outgoing messages
+						<hr>
+						Next the delayed message is picked up and dispatches the stored messages to their destinations
+						<hr>
+						If the controller action failed to commit, the delayed message is eventually discarded
+						<hr>
+						If the controller action takes too long to commit, the delayed message inserts a tombstone that causes the controller action transaction to fail
+					</aside>
+				</section>
+				<section>
+					<h2>The network is <span style="color: red;">NOT</span> reliable</h2>
+				</section>
+				<section>
+					<h2>Double submit problem</h2>
+				</section>
+				<section>
+					<img src="images/web-ui-5-2.png" />
+				</section>
+				<section>
+					<h2>State-based deduplication</h2>
+				</section>
+				<section data-transition="slide-in none-out">
+					<h3>
+					<pre class="stretch"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|4|5-6">
+var o = repo.Find(msg.OrderId);
+if (!o.Submitted) //No message id needed
+{
+	o.Submit(msg.OrderData);
+	session.Publish(
+		new OrderSubmitted());
+}
+					</code></pre>
+					</h3>
+					<aside class="notes">
+						No message ID is needed to perform this deduplication.
+						<hr>
+						In reality the most common example is a bool flag (not done - done) but it does not have to be limited to it
+					</aside>
+				</section>
+				<section>
+					<img src="images/state-based-deduplication.png" class="stretch"/>
+					<aside class="notes">
+						Any state machine without loops is going to work
+					</aside>
+				</section>
+				<section>
+					<img src="images/web-api-1.png" />
+					<aside class="notes">
+						Let's take a look at the other side of the same potato where API requests are processed.	
+					</aside>
+				</section>
+				<section>
+					<h2>The network is <span style="color: red;">NOT</span> reliable</h2>
+					<aside class="notes">
+						And you know the chorus now, so you can repeat after me, the network is NOT reliable.
+						<hr>
+						Your API clients, if they want to get their order through, need to re-submit their requests if not sure
+						<hr>
+						Bound to generate duplicates
+					</aside>
+				</section>
+				<section>
+					<h2>State-based deduplication?</h2>
+					<aside class="notes">
+						Nope, because for state based-deduplication there needs to be state created first. And how do we ensure that state is created only once? 
+						<hr>
+						In the Web UI that is the benefit of the limitations imposed by the logic application combined with the auth scheme
+						<hr>
+						What else can we do?
+					</aside>
+				</section>
+				<section>
+					<h2>ID based deduplication</h2>
+				</section>
+				<section>
+					<h2>Client-generated ID</h2>
+					<aside class="notes">
+						But where exactly is that ID generated? To find out let's look at the other side of the system, where we are the API client, either to internal or external API.
+					</aside>
+				</section>
+				<section>
+					<img src="images/web-api-2.png" />
+					<aside class="notes">
+						Finally the last potato
+						<hr>
+						Du har atid din sista potatis.
+						<hr>
+						Customers need invoices so our system generates them as PDF documents.
+					</aside>
+				</section>
+				<section>
+					<img src="images/aux-store-1.png" />
+					<aside class="notes">
+						This is how this process works.
+						<hr>
+						The message comes in, updates the database and based on that state generates a PDF downloaded by the customer.
+					</aside>
+				</section>
+				<!-- <section>
+					<h2>Customers need invoices</h2>
+				</section> -->
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/aux-store-2-1.png" />
+						<img class="fragment" src="images/aux-store-2-2.png" />
+						<img class="fragment" src="images/aux-store-2-3.png" />
+						<img class="fragment" src="images/aux-store-2-4.png" />
+						<img class="fragment" src="images/aux-store-2-5.png" />
+					</div>
+					<aside class="notes">
+						The PDF incoming message contains some ID which is used to generate the path for the document.
+						<hr>
+						Unfortunately it is too simplistic. Remember the consistency problem when messages were generated based on mutable state? This is exactly the same scenario.
+						<hr>
+						A better approach is to generate the PDFs under pseudo-random paths and send out the "winning" path in a follow-up message. We know already how to keep the outgoing messages consistent with the updates, don't we?
+						<hr>
+						Unfortunately this create an issue because all the "losing" documents are piling up in a big pile of garbage.
+						<hr>
+						The solution is to pre-generate the pseudo-random paths and store them in the database before using. This way we can perform the cleanup after the transaction is committed.
+					</aside>
+				</section>
+				<section>
+					<h3 class="fragment">Comms is a separate domain</h3>
+					<h3 class="fragment">Network is <span style="color: red;">NOT</span> not reliable</h3>
+					<h3 class="fragment">Repository is key to reliability</h3>
+					<h3 class="fragment">Deduplication is not optional</h3>
+					<h3 class="fragment">Network is <span style="color: red;">NOT</span> not reliable</h3>
+					<aside class="notes">
+						To summarize
+						<hr>
+						I wanted to tell a joke about idempotence but I don't want to repeat myself
+					</aside>
+				</section>
+				<section>
+					<h2>Generic? <span class="fragment">Ideally</span></h2>
+					<h2 class="fragment">Supporting? <span class="fragment">Likely</span></h2>
+					<h2 class="fragment">Core? <span class="fragment">Rarely</span></h2>
+					<aside class="notes">
+						So, coming back to our communication domain picture, is comms generic?
+						<hr>
+						Core? Well, if you work for Particular then YES, for sure.
+					</aside>
+				</section>
+				<section>
+					<img src="images/crystal ball.jpg" class="stretch"/>
+				</section>
+				<!-- <section>
+					<h3 class="fragment">Non-deterministic</h3>
+					<h3 class="fragment">Space</h3>
+					<h3 class="fragment">Cleanup</h3>
+					<h3 class="fragment">Limited to messaging</h3>
+					<aside class="notes">
+						Are we done yet? Well, no. I want us to reflect on the current state of the deduplication patterns available and point to some possible future improvements.
+						<hr>
+						Deduplication data eviction is based on time
+						<hr>
+						Deduplication data takes a lot of space
+						<hr>
+						Evicion process requires a timer job that is inherently hard to scale and non-trivial to configure and manage
+						<hr>
+						No support for documents or other side-effects
+					</aside>
+				</section> -->
+				<section>
+					<h3>What if message contained processing information?</h3>
+					<aside class="notes">
+						We could solve the deduplication data problems by making this information part of the message, but how exactly?
+						<hr>
+						Message queues are not well-known for being flexible and extensible pieces of software.
+					</aside>
+				</section>
+				<section data-transition="slide-in none-out">
+					<h3>Messages are documents</h3>
+					<hr>
+					<h3>Documents are state</h3>
+					<aside class="notes">
+						If messages are documents then we know how to send them in a way consistent with data updates
+						<hr>
+						Because documents are pre-existing pieces of state, we can use state-based deduplication on them using a simple forward-only state machine: sent-processed-deleted
+					</aside>
+				</section>
+				<section data-transition="none-out none-in">
+					<h3>Consistent document creation</h3>
+					<hr>
+					<h3>Documents are state</h3>
+					<aside class="notes">
+						If messages are documents then we know how to send them in a way consistent with data updates
+						<hr>
+						Because documents are pre-existing pieces of state, we can use state-based deduplication on them using a simple forward-only state machine: sent-processed-deleted
+					</aside>
+				</section>
+				</section>
+				<section data-transition="slide-out none-in">
+					<h3>Consistent document creation</h3>
+					<hr>
+					<h3>State-based deduplication</h3>
+					<aside class="notes">
+						If messages are documents then we know how to send them in a way consistent with data updates
+						<hr>
+						Because documents are pre-existing pieces of state, we can use state-based deduplication on them using a simple forward-only state machine: sent-processed-deleted
+					</aside>
+				</section>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/aux-store-2-5.png" />
+						<img class="fragment" src="images/document-driven-1.png" />
+						<img class="fragment" src="images/document-driven-2.png" />
+						<img class="fragment" src="images/document-driven-3.png" />
+					</div>
+				</section>
+				<!-- <section>
+					<h2>Patterns?</h2>
+					<aside class="notes">
+						Let's try to extract some patterns now
+					</aside>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/patterns-1-message-in-out.png" />
+						<img class="fragment" src="images/patterns-2-message-request.png" />
+						<img class="fragment" src="images/patterns-3-response-message.png" />
+						<img class="fragment" src="images/patterns-3a-response-message.png" />
+						<img class="fragment" src="images/patterns-4-request-response.png" />
+					</div>
+					<aside class="notes">
+						First, a message handler.
+						<hr>
+						Next, a message handler that calls a web API
+						<hr>
+						And one that receives the response
+						<hr>
+						Finally, one that does the web request processing	
+					</aside>
+				</section>
+				<section>
+					<img src="images/patterns-all.png" class="stretch"/>
+				</section> -->
+				<!-- <section>
+					<img src="images/summary.png" class="stretch"/>
+					<aside class="notes">
+						To end by referring back to the Blue Book, this is what I would call "refactoring towards a deeper insight". We took some seemingly unrelated patterns for building reliable distributed systems and distilled a single approach that offers a cohesive set of patterns -- building blocks for a distributed system. 
+						<hr>
+						We are not there yet with the technology, but we continue to push the boundaries of what is possible in a distributed system engineering.
+					</aside>
+				</section> -->
+				<section>
+					<img src="images/blog.png" class="stretch"/>
+				</section>
+				<!-- <section>
+					<section>
+						<img src="images/ndc-workshops.png" class="stretch"/>
+						<h3>Building reliable event-driven microservices</h3>
+					</section>
+				</section> -->
+				<section>
+					<h1>Thank you!</h1>
+					<!-- <p><a href="https://ndcworkshops.com/slot/reliable-event-driven-microservices">NDC Workshops</a></p> -->
+					<p><a href="https://github.com/exactly-once/">github.com/exactly-once</a></p>
+					<p><a href="https://exactly-once.github.io/">exactly-once.github.io</a></p>
+					<p><a href="https://www.linkedin.com/in/szymonpobiega/">linkedin.com/in/SzymonPobiega</a></p>
+					<p><a href="https://twitter.com/SzymonPobiega">twitter.com/SzymonPobiega</a></p>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/jquery-2.1.4.min.js"></script>
+
+		<script src="dist/reveal.js"></script>
+
+		<script src="plugin/math/math.js"></script>
+		<script src="plugin/zoom/zoom.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/search/search.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: false,
+				progress: true,
+				history: true,
+				center: true,
+				// The "normal" size of the presentation, aspect ratio will
+				// be preserved when the presentation is scaled to fit different
+				// resolutions. Can be specified using percentage units.
+				width: 1260,
+				height: 700,
+
+				margin: 0,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				mathjax2: {
+					config: 'TeX-AMS_HTML-full',
+				},
+
+				// There are three typesetters available
+				// RevealMath.MathJax2 (default)
+				// RevealMath.MathJax3
+				// RevealMath.KaTeX
+				//
+				// More info at https://revealjs.com/math/
+				plugins: [ RevealMath.MathJax3, RevealZoom, RevealNotes, RevealSearch, RevealMarkdown, RevealHighlight ]
+			});
+
+		</script>
+
+	</body>
+</html>
