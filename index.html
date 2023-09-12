@@ -774,15 +774,75 @@ if (!o.Submitted) //No message id needed
 					<div class="r-stack stretch">
 						<img class="" src="images/aux-store-2-1.png" />
 						<img class="fragment" src="images/aux-store-2-2.png" />
-						<img class="fragment" src="images/aux-store-2-3.png" />
-						<img class="fragment" src="images/aux-store-2-4.png" />
-						<img class="fragment" src="images/aux-store-2-5.png" />
 					</div>
 					<aside class="notes">
 						The PDF incoming message contains some ID which is used to generate the path for the document.
 						<hr>
 						Unfortunately it is too simplistic. Remember the consistency problem when messages were generated based on mutable state? This is exactly the same scenario.
-						<hr>
+					</aside>
+				</section>
+				<section data-transition="slide-in none-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3">
+UpdateData(msg); //x = 1
+var data = LoadDocumentData(); //x == 1
+var doc = GenerateDocument(); //x == 1
+Store(doc);
+return;
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1">
+UpdateData(msg);
+var data = LoadDocumentData();
+var doc = GenerateDocument();
+Store(doc);
+return;
+					</code></pre>
+					</h4>
+				</section>
+				<section data-transition="none-in none-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="3">
+UpdateData();
+var data = LoadDocumentData();
+var doc = GenerateDocument(); //x == 1
+Store(doc);
+return;
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="1|2|3|4|5">
+UpdateData(); //x = 2
+var data = LoadDocumentData(); //x == 2
+var doc = GenerateDocument(); //y = x
+Store(doc); //y = 2
+return; //x == 2, y == 2
+					</code></pre>
+					</h4>
+				</section>
+				<section data-transition="none-in slide-out">
+					<h4>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="3|4|5">
+UpdateData();
+var data = LoadDocumentData();
+var doc = GenerateDocument(); //x == 1
+Store(doc); //y = 1
+return; //x == 2, y == 1
+					</code></pre>
+					<pre class="stretch" style="width: 70%"><code class="csharp" data-noescape data-trim data-line-numbers="5">
+UpdateData();
+var data = LoadDocumentData();
+var doc = GenerateDocument();
+Store(doc);
+return;
+					</code></pre>
+					</h4>
+				</section>
+				<section>
+					<div class="r-stack stretch">
+						<img class="" src="images/aux-store-2-2.png" />
+						<img class="fragment" src="images/aux-store-2-3.png" />
+						<img class="fragment" src="images/aux-store-2-4.png" />
+						<img class="fragment" src="images/aux-store-2-5.png" />
+					</div>
+					<aside class="notes">
 						A better approach is to generate the PDFs under pseudo-random paths and send out the "winning" path in a follow-up message. We know already how to keep the outgoing messages consistent with the updates, don't we?
 						<hr>
 						Unfortunately this create an issue because all the "losing" documents are piling up in a big pile of garbage.
